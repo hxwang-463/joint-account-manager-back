@@ -1,8 +1,6 @@
 package xyz.hxwang.jointaccountmanager;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,5 +19,20 @@ public class RecordController {
         LocalDate today = LocalDate.now();
         LocalDate sevenDaysBefore = today.minusDays(7);
         return recordService.getAllRecordsAfterDate(sevenDaysBefore);
+    }
+
+    @PutMapping("/{id}/amount")
+    public void changeRecordAmount(@PathVariable String id, @RequestBody String amount){
+        recordService.changeAmount(id, amount);
+    }
+
+    @PutMapping("/{id}/paid")
+    public void markRecordPaid(@PathVariable String id){
+        recordService.markPaid(id);
+    }
+
+    @PutMapping("/{id}/date")
+    public void markRecordPaid(@PathVariable String id, @RequestBody String offset){
+        recordService.changeDate(id, offset);
     }
 }

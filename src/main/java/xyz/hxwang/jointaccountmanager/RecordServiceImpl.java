@@ -1,9 +1,8 @@
 package xyz.hxwang.jointaccountmanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -28,22 +27,27 @@ public class RecordServiceImpl implements RecordService{
     }
 
     @Override
-    public void changeAmount(long id) {
-
+    public void changeAmount(String id, String amount) {
+        recordRepository.updateAmountById(Long.valueOf(id), new BigDecimal(amount));
     }
 
     @Override
-    public void markPaid(long id) {
-
+    public void markPaid(String id) {
+        recordRepository.updateIsPaidById(Long.valueOf(id));
+        // TODO MODIFY BALANCE
     }
 
     @Override
-    public void upDate(long id) {
-
+    public void changeDate(String id, String offset) {
+        LocalDate date = recordRepository.getRecordById(Long.valueOf(id)).getDate();
+        LocalDate newDate;
+        int offsetInt = Integer.parseInt(offset);
+        if (offsetInt > 0) {
+            newDate = date.plusDays(offsetInt);
+        } else {
+            newDate = date.minusDays(offsetInt * -1);
+        }
+        recordRepository.updateDateById(Long.valueOf(id), newDate);
     }
 
-    @Override
-    public void downDate(long id) {
-
-    }
 }

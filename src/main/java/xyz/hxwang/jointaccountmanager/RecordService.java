@@ -5,8 +5,7 @@ import java.util.List;
 
 public interface RecordService {
     List<RecordDTO> getAllRecordsAfterDate(LocalDate date);
-    void changeAmount(long id);
-    void markPaid(long id);
-    void upDate(long id);
-    void downDate(long id);
+    void changeAmount(String id, String amount);
+    void markPaid(String id);
+    void changeDate(String id, String offset);
 }
