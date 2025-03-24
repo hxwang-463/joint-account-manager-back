@@ -1,5 +1,6 @@
 package xyz.hxwang.jointaccountmanager;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -9,9 +10,11 @@ import java.util.List;
 @Service
 public class RecordServiceImpl implements RecordService{
     private final RecordRepository recordRepository;
+    private final BalanceRepository balanceRepository;
 
-    public RecordServiceImpl(RecordRepository recordRepository) {
+    public RecordServiceImpl(RecordRepository recordRepository, BalanceRepository balanceRepository) {
         this.recordRepository = recordRepository;
+        this.balanceRepository = balanceRepository;
     }
 
     @Override
@@ -32,9 +35,12 @@ public class RecordServiceImpl implements RecordService{
     }
 
     @Override
+    @Transactional
     public void markPaid(String id) {
         recordRepository.updateIsPaidById(Long.valueOf(id));
-        // TODO MODIFY BALANCE
+        BigDecimal balance = balanceRepository.findBalanceById(0L).getAmount();
+        BigDecimal amount = recordRepository.getRecordById(Long.valueOf(id)).getAmount();
+        balanceRepository.updateBalanceById(0L, balance.subtract(amount));
     }
 
     @Override
