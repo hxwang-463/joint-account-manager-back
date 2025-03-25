@@ -13,10 +13,13 @@ import java.util.List;
 
 @Repository
 public interface RecordRepository extends JpaRepository<Record, Long> {
-    List<Record> findAllByDateAfterOrderByDateDesc(LocalDate date);
     List<Record> findAllByDateAfterOrderByDateAsc(LocalDate date);
 
     Record getRecordById(Long id);
+
+    List<Record> findAllByDateEquals(LocalDate date);
+
+    List<Record> findAllByAcctNameEqualsAndDateEquals(String acctName, LocalDate date);
 
     @Modifying
     @Transactional
