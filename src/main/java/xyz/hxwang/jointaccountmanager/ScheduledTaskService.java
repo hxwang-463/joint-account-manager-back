@@ -29,6 +29,7 @@ public class ScheduledTaskService {
                 recordRepository.saveAndFlush(Record.builder()
                         .acctName(a.getAcctName())
                         .date(today.plusMonths(1))
+                        .amount(a.getDefaultAmount())
                         .build());
                 log.info("creating new record with acctName={} and date={}", a.getAcctName(), today.plusMonths(1));
             }

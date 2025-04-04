@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -23,4 +25,6 @@ public class Account {
     @Column(name="day-of-month", nullable = false)
     private int dayOfMonth;
 
+    @Column(name="default-amount")
+    private BigDecimal defaultAmount;
 }
