@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -42,13 +44,15 @@ public class ScheduledTaskService {
     public void markRecordsAsPaid() {
         log.info("start marking records as paid");
         LocalDate today = LocalDate.now();
+        AtomicReference<BigDecimal> amount = new AtomicReference<>(BigDecimal.valueOf(0));
         recordRepository.findAllByDateEquals(today).forEach(r -> {
             if (!r.isPaid()) {
-                balanceRepository.updateBalanceById(0L, balanceRepository.findBalanceById(0L).getAmount().subtract(r.getAmount()));
+                amount.updateAndGet(v -> v.add(r.getAmount()));
                 recordRepository.updateIsPaidById(r.getId());
                 log.info("marking records as paid with id={}", r.getId());
             }
         });
-        log.info("finish marking records as paid");
+        balanceRepository.updateBalanceById(0L, balanceRepository.findBalanceById(0L).getAmount().subtract(amount.get()));
+        log.info("finish marking records as paid, total amount={}", amount.get());
     }
 }
