@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -44,15 +43,15 @@ public class ScheduledTaskService {
     public void markRecordsAsPaid() {
         log.info("start marking records as paid");
         LocalDate today = LocalDate.now();
-        AtomicReference<BigDecimal> amount = new AtomicReference<>(BigDecimal.valueOf(0));
-        recordRepository.findAllByDateEquals(today).forEach(r -> {
+        BigDecimal amount = BigDecimal.ZERO;
+        for (Record r : recordRepository.findAllByDateEquals(today)) {
             if (!r.isPaid()) {
-                amount.updateAndGet(v -> v.add(r.getAmount()));
+                amount = amount.add(r.getAmount());
                 recordRepository.updateIsPaidById(r.getId());
                 log.info("marking records as paid with id={}", r.getId());
             }
-        });
-        balanceRepository.updateBalanceById(0L, balanceRepository.findBalanceById(0L).getAmount().subtract(amount.get()));
-        log.info("finish marking records as paid, total amount={}", amount.get());
+        }
+        balanceRepository.updateBalanceById(0L, balanceRepository.findBalanceById(0L).getAmount().subtract(amount));
+        log.info("finish marking records as paid, total paid amount={}", amount);
     }
 }

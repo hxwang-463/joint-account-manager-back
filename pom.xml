@@ -10,7 +10,7 @@
     </parent>
     <groupId>xyz.hxwang</groupId>
     <artifactId>joint-account-manager</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.2</version>
     <packaging>jar</packaging>
     <name>joint-account-manager</name>
     <description>joint-account-manager</description>
