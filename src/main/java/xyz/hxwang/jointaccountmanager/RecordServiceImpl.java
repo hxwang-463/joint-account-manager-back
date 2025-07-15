@@ -10,11 +10,11 @@ import java.util.List;
 @Service
 public class RecordServiceImpl implements RecordService{
     private final RecordRepository recordRepository;
-    private final BalanceRepository balanceRepository;
+    private final BalanceService balanceService;
 
-    public RecordServiceImpl(RecordRepository recordRepository, BalanceRepository balanceRepository) {
+    public RecordServiceImpl(RecordRepository recordRepository, BalanceService balanceService) {
         this.recordRepository = recordRepository;
-        this.balanceRepository = balanceRepository;
+        this.balanceService = balanceService;
     }
 
     @Override
@@ -38,9 +38,9 @@ public class RecordServiceImpl implements RecordService{
     @Transactional
     public void markPaid(String id) {
         recordRepository.updateIsPaidById(Long.valueOf(id));
-        BigDecimal balance = balanceRepository.findBalanceById(0L).getAmount();
-        BigDecimal amount = recordRepository.getRecordById(Long.valueOf(id)).getAmount();
-        balanceRepository.updateBalanceById(0L, balance.subtract(amount));
+        Record record = recordRepository.getRecordById(Long.valueOf(id));
+        String comment = "Mark " + record.getAcctName() + " paid successfully, id: " + id;
+        balanceService.updateBalance(record.getAmount().negate(), comment);
     }
 
     @Override

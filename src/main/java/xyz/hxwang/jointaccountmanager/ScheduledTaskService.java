@@ -5,20 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Slf4j
 @Service
 public class ScheduledTaskService {
     private final RecordRepository recordRepository;
-    private final BalanceRepository balanceRepository;
     private final AccountRepository accountRepository;
+    private final BalanceService balanceService;
 
-    public ScheduledTaskService(RecordRepository recordRepository, BalanceRepository balanceRepository, AccountRepository accountRepository) {
+    public ScheduledTaskService(RecordRepository recordRepository, AccountRepository accountRepository, BalanceService balanceService) {
         this.recordRepository = recordRepository;
-        this.balanceRepository = balanceRepository;
         this.accountRepository = accountRepository;
+        this.balanceService = balanceService;
     }
 
     @Scheduled(cron = "0 0 0 * * ?") // Runs every day at 00:00
@@ -43,15 +42,13 @@ public class ScheduledTaskService {
     public void markRecordsAsPaid() {
         log.info("start marking records as paid");
         LocalDate today = LocalDate.now();
-        BigDecimal amount = BigDecimal.ZERO;
-        for (Record r : recordRepository.findAllByDateEquals(today)) {
-            if (!r.isPaid()) {
-                amount = amount.add(r.getAmount());
-                recordRepository.updateIsPaidById(r.getId());
-                log.info("marking records as paid with id={}", r.getId());
+        for (Record record : recordRepository.findAllByDateEquals(today)) {
+            if (!record.isPaid()) {
+                recordRepository.updateIsPaidById(record.getId());
+                String comment = "Auto mark " + record.getAcctName() + " paid successfully, id: " + record.getId();
+                balanceService.updateBalance(record.getAmount().negate(), comment);
+                log.info("marking records as paid with id={}", record.getId());
             }
         }
-        balanceRepository.updateBalanceById(0L, balanceRepository.findBalanceById(0L).getAmount().subtract(amount));
-        log.info("finish marking records as paid, total paid amount={}", amount);
     }
 }
