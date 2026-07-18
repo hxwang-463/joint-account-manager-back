@@ -35,5 +35,8 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     @Transactional
     @Query("UPDATE Record m SET m.date = :date WHERE m.id = :id")
     void updateDateById(@Param("id") Long id, @Param("date") LocalDate date);
+
+    @Query("SELECT COALESCE(SUM(r.amount), 0) FROM Record r WHERE r.date >= :startDate AND r.date < :endDate")
+    BigDecimal sumAmountByMonthRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
 

@@ -2,6 +2,7 @@ package xyz.hxwang.jointaccountmanager;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,6 +20,11 @@ public class RecordController {
         LocalDate today = LocalDate.now();
         LocalDate sevenDaysBefore = today.minusDays(7);
         return recordService.getAllRecordsAfterDate(sevenDaysBefore);
+    }
+
+    @GetMapping("/total/year/{year}/month/{month}")
+    public BigDecimal getTotalAmountForMonth(@PathVariable String year, @PathVariable String month){
+        return recordService.getTotalAmountForMonth(year, month);
     }
 
     @PutMapping("/{id}/amount")

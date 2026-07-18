@@ -1,5 +1,6 @@
 package xyz.hxwang.jointaccountmanager;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -8,4 +9,5 @@ public interface RecordService {
     void changeAmount(String id, String amount);
     void markPaid(String id);
     void changeDate(String id, String offset);
+    BigDecimal getTotalAmountForMonth(String year, String month);
 }

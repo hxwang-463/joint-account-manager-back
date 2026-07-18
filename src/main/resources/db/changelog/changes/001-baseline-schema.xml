@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        objectQuotingStrategy="QUOTE_ALL_OBJECTS">
+
+    <!--
+      Baseline: the schema exactly as Hibernate's ddl-auto=update had created it,
+      so that adopting Liquibase is a no-op for databases that already exist.
+
+      The precondition is what makes that safe. On an existing database the tables
+      are already there, so the changeset is marked as run without executing and no
+      data is touched. On an empty database the tables get created. Both paths end
+      up with the same DATABASECHANGELOG state.
+
+      Columns are quoted (QUOTE_ALL_OBJECTS) because acct-name, is-paid,
+      day-of-month and default-amount contain hyphens and are not valid bare
+      identifiers.
+    -->
+    <changeSet id="001-baseline-schema" author="jointaccountmanager">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="records"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="account">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="acct-name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="day-of-month" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="default-amount" type="DECIMAL(38,2)"/>
+        </createTable>
+
+        <createTable tableName="balance">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(38,2)"/>
+            <column name="comment" type="VARCHAR(255)"/>
+            <column name="date" type="DATE"/>
+            <column name="delta" type="DECIMAL(38,2)"/>
+        </createTable>
+
+        <createTable tableName="records">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="acct-name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(38,2)"/>
+            <column name="date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+              BIT(1), not BOOLEAN. Liquibase renders BOOLEAN as tinyint on MySQL,
+              but the existing production column is bit(1) (what Hibernate created)
+              and Hibernate's validator rejects tinyint for a boolean field.
+            -->
+            <column name="is-paid" type="BIT(1)"/>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

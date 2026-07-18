@@ -56,4 +56,15 @@ public class RecordServiceImpl implements RecordService{
         recordRepository.updateDateById(Long.valueOf(id), newDate);
     }
 
+    @Override
+    public BigDecimal getTotalAmountForMonth(String year, String month) {
+        int yearInt = Integer.parseInt(year);
+        int monthInt = Integer.parseInt(month);
+        
+        LocalDate startDate = LocalDate.of(yearInt, monthInt, 1);
+        LocalDate endDate = startDate.plusMonths(1);
+        
+        return recordRepository.sumAmountByMonthRange(startDate, endDate);
+    }
+
 }

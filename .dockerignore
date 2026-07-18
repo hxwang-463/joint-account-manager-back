@@ -1,0 +1,20 @@
+# Build output — the image builds the jar itself, and shipping a stale local
+# target/ into the context both slows the build and risks packaging it.
+target/
+
+# VCS and IDE noise
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Docs and local tooling not needed to build the app
+HELP.md
+README.md
+.github/
+.mvn/
+mvnw
+mvnw.cmd

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Add one file per schema change and include it here, in order. Never edit a
+      changeset that has already run against a real database: Liquibase records a
+      checksum of each changeset and will fail on startup if one changes after the
+      fact. Correct a mistake by appending a new changeset instead.
+    -->
+    <include file="db/changelog/changes/001-baseline-schema.xml"/>
+
+</databaseChangeLog>
