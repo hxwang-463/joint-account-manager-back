@@ -11,29 +11,66 @@ on:
 env:
   IMAGE_NAME: kaikai463/joint-account-manager
 
+# Two master pushes running at once could otherwise pick the same version and
+# race each other's pom commit. Queue them instead of cancelling: a cancelled run
+# might already have pushed an image.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      # contents: write is needed to push the version bump back to master.
+      contents: write
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
+        with:
+          # HEAD~1 is needed to tell a manual version bump from an ordinary
+          # code-only commit.
+          fetch-depth: 2
 
-      # The image tag follows <version> in pom.xml, so a release is driven by
-      # bumping the pom rather than by remembering to tag the image by hand.
-      - name: Read project version from pom.xml
-        id: pom
+      # Every published image gets its own version, so no tag is ever overwritten.
+      # Bump <version> in pom.xml by hand for a minor or major release; leave it
+      # alone and the patch digit is incremented automatically.
+      - name: Determine version to publish
+        id: version
         run: |
-          version=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
-          root = ET.parse('pom.xml').getroot()
-          print(root.find('m:version', ns).text.strip())
-          ")
-          echo "Project version: $version"
+          set -euo pipefail
+          current=$(python3 .github/scripts/pom_version.py read pom.xml)
+
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            previous=$(git show HEAD~1:pom.xml 2>/dev/null \
+              | python3 .github/scripts/pom_version.py read-stdin 2>/dev/null || echo "")
+          else
+            previous=""
+          fi
+
+          # Pull requests and git tags publish exactly what the pom says; only a
+          # master build is allowed to invent a new version.
+          if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.ref_type }}" = "tag" ]; then
+            version="$current"; bumped=false
+          elif [ -n "$previous" ] && [ "$current" = "$previous" ]; then
+            version=$(python3 .github/scripts/pom_version.py bump "$current"); bumped=true
+          else
+            version="$current"; bumped=false
+          fi
+
+          if [ "$bumped" = "true" ]; then
+            echo "pom.xml unchanged since $previous, auto-bumping to $version"
+          else
+            echo "using version $version from pom.xml"
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "bumped=$bumped" >> "$GITHUB_OUTPUT"
+
+      # Written before the build so the version inside the jar matches the image tag.
+      - name: Apply version to pom.xml
+        if: steps.version.outputs.bumped == 'true'
+        run: python3 .github/scripts/pom_version.py set pom.xml "${{ steps.version.outputs.version }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -56,10 +93,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ steps.pom.outputs.version }}
+            type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
-            type=sha,format=short
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -73,3 +109,16 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
+
+      # Committed only after a successful push, so a failed build never advances
+      # the version. [skip ci] is belt and braces: pushes made with GITHUB_TOKEN
+      # do not trigger workflows anyway, so this cannot loop.
+      - name: Commit version bump
+        if: steps.version.outputs.bumped == 'true' && github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "ci: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}

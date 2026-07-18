@@ -46,7 +46,7 @@ public class ScheduledTaskService {
             if (!record.isPaid()) {
                 recordRepository.updateIsPaidById(record.getId());
                 String comment = "Auto mark " + record.getAcctName() + " paid successfully, id: " + record.getId();
-                balanceService.updateBalance(record.getAmount().negate(), comment);
+                balanceService.updateBalance(record.getAmount().negate(), comment, record.getId());
                 log.info("marking records as paid with id={}", record.getId());
             }
         }
