@@ -37,6 +37,11 @@ public class RecordController {
         recordService.markPaid(id);
     }
 
+    @PutMapping("/{id}/unpaid")
+    public void revertRecordPaid(@PathVariable String id){
+        recordService.revertPaid(id);
+    }
+
     @PutMapping("/{id}/date")
     public void markRecordPaid(@PathVariable String id, @RequestBody String offset){
         recordService.changeDate(id, offset);

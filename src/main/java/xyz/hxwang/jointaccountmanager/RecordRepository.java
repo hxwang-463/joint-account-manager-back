@@ -28,6 +28,11 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
 
     @Modifying
     @Transactional
+    @Query("UPDATE Record m SET m.isPaid = false WHERE m.id = :id")
+    void updateUnpaidById(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE Record m SET m.amount = :amount WHERE m.id = :id")
     void updateAmountById(@Param("id") Long id, @Param("amount") BigDecimal amount);
 

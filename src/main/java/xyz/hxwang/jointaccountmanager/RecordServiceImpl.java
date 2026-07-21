@@ -74,6 +74,26 @@ public class RecordServiceImpl implements RecordService{
     }
 
     @Override
+    @Transactional
+    public void revertPaid(String id) {
+        Long recordId = Long.valueOf(id);
+        Record record = recordRepository.getRecordById(recordId);
+        if (record == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No record with id " + recordId);
+        }
+        if (!record.isPaid()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Record " + recordId + " is not paid, so there is nothing to revert");
+        }
+
+        recordRepository.updateUnpaidById(recordId);
+        // Removes the linked ledger row and heals the running totals after it. A
+        // record paid before ledger linking existed has no row, so this is a no-op
+        // and only the paid flag is cleared.
+        balanceService.removeForRevertedRecord(recordId);
+    }
+
+    @Override
     public void changeDate(String id, String offset) {
         LocalDate date = recordRepository.getRecordById(Long.valueOf(id)).getDate();
         LocalDate newDate;

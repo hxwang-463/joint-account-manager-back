@@ -64,6 +64,25 @@ public class BalanceServiceImpl implements BalanceService {
     }
 
     @Override
+    @Transactional
+    public void removeForRevertedRecord(Long recordId) {
+        Balance entry = balanceRepository.findByRecordId(recordId).orElse(null);
+        if (entry == null) {
+            // A legacy or manual payment with no linked ledger row: nothing to unwind.
+            return;
+        }
+
+        Long entryId = entry.getId();
+        BigDecimal delta = entry.getDelta();
+
+        // The row's delta was -amount, so shifting later totals by that delta adds the
+        // amount back to each of them. Done before the delete so the row id is still
+        // valid; the deleted row itself is excluded (id strictly greater).
+        balanceRepository.shiftAmountsAfter(entryId, delta);
+        balanceRepository.deleteById(entryId);
+    }
+
+    @Override
     public Balance findLatestBalance() {
         return balanceRepository.findTopByOrderByIdDesc();
     }

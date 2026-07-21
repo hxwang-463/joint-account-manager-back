@@ -8,6 +8,7 @@ public interface RecordService {
     List<RecordDTO> getAllRecordsAfterDate(LocalDate date);
     void changeAmount(String id, String amount);
     void markPaid(String id);
+    void revertPaid(String id);
     void changeDate(String id, String offset);
     BigDecimal getTotalAmountForMonth(String year, String month);
 }
