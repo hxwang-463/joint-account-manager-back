@@ -10,7 +10,7 @@
     </parent>
     <groupId>xyz.hxwang</groupId>
     <artifactId>joint-account-manager</artifactId>
-    <version>1.5.2</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
     <name>joint-account-manager</name>
     <description>joint-account-manager</description>
@@ -47,6 +47,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <!--
           Spring Boot 4 split auto-configuration into per-technology modules.
