@@ -1,0 +1,73 @@
+# Local testing sandbox: MySQL + the application, wired together.
+#
+#   cd docker
+#   docker compose up --build      # start db + app, seed sample data
+#   docker compose down            # stop (keeps the database)
+#   docker compose down -v         # stop and wipe the database
+#
+# The app is built from the repository's own Dockerfile (context: ..), so this
+# runs the exact image that ships to production — no separate test build to drift.
+name: jam-local
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: jam-local-db
+    environment:
+      MYSQL_ROOT_PASSWORD: localpw
+      MYSQL_DATABASE: jointacct
+    ports:
+      # Exposed on 3307 so it does not clash with a MySQL already using 3306 on
+      # your machine. Connect a GUI client to localhost:3307, root / localpw.
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-plocalpw", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: jam-local-app
+    container_name: jam-local-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: "jdbc:mysql://db:3306/jointacct?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=America/New_York"
+      DB_USERNAME: root
+      DB_PASSWORD: localpw
+      TZ: America/New_York
+      # Login password for the API (user "AdminUser"). Throwaway value for local
+      # testing only; the app refuses to start if this is unset.
+      AUTH_PASSWORD: localtestpw
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  # Runs once, after the app is healthy (so Liquibase has built the schema), and
+  # loads sample rows only when the database is still empty. Exits 0 when done;
+  # seeing it "exited" in `docker compose ps` is expected.
+  seed:
+    image: mysql:8.4
+    container_name: jam-local-seed
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./db:/seed:ro
+    entrypoint: ["sh", "/seed/seed-if-empty.sh"]
+    restart: "no"
+
+volumes:
+  db-data:
