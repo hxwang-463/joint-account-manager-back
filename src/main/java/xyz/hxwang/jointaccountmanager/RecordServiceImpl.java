@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import xyz.hxwang.jointaccountmanager.spend.BillTransactionService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,10 +14,13 @@ import java.util.List;
 public class RecordServiceImpl implements RecordService{
     private final RecordRepository recordRepository;
     private final BalanceService balanceService;
+    private final BillTransactionService billTransactionService;
 
-    public RecordServiceImpl(RecordRepository recordRepository, BalanceService balanceService) {
+    public RecordServiceImpl(RecordRepository recordRepository, BalanceService balanceService,
+                             BillTransactionService billTransactionService) {
         this.recordRepository = recordRepository;
         this.balanceService = balanceService;
+        this.billTransactionService = billTransactionService;
     }
 
     @Override
@@ -50,6 +54,7 @@ public class RecordServiceImpl implements RecordService{
         // correct. A paid one already moved the balance by its old amount.
         if (paid) {
             balanceService.adjustForRecordAmountChange(recordId, oldAmount, newAmount);
+            billTransactionService.onRecordAmountChanged(recordId, newAmount);
         }
     }
 
@@ -71,6 +76,9 @@ public class RecordServiceImpl implements RecordService{
         recordRepository.updateIsPaidById(recordId);
         String comment = "Mark " + record.getAcctName() + " paid successfully, id: " + id;
         balanceService.updateBalance(record.getAmount().negate(), comment, recordId);
+        // Accounts with no statement behind them would otherwise be missing from
+        // the spend analysis; statement-backed ones generate nothing here.
+        billTransactionService.onRecordPaid(record);
     }
 
     @Override
@@ -91,6 +99,7 @@ public class RecordServiceImpl implements RecordService{
         // record paid before ledger linking existed has no row, so this is a no-op
         // and only the paid flag is cleared.
         balanceService.removeForRevertedRecord(recordId);
+        billTransactionService.onRecordReverted(recordId);
     }
 
     @Override

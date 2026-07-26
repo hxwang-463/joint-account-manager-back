@@ -13,5 +13,6 @@
     -->
     <include file="db/changelog/changes/001-baseline-schema.xml"/>
     <include file="db/changelog/changes/002-add-record-id-to-balance.xml"/>
+    <include file="db/changelog/changes/003-spend-tracking.xml"/>
 
 </databaseChangeLog>

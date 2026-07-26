@@ -4,7 +4,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,7 +37,40 @@ public class SecurityConfig {
     // username hardcoded in the frontend.
     private static final String USERNAME = "AdminUser";
 
+    /**
+     * The API docs stay behind the same login, but keep the standard
+     * {@code WWW-Authenticate} challenge so a browser offers its own prompt.
+     *
+     * <p>Without this the docs are unusable interactively: the main chain
+     * deliberately suppresses that header, so hitting Swagger in a browser
+     * returns a bare 401 with no way to authenticate and the page renders
+     * blank. Suppression is there for the SPA's benefit, and the SPA never
+     * requests these paths.
+     */
     @Bean
+    @Order(1)
+    SecurityFilterChain docsFilterChain(HttpSecurity http,
+                                        @Value("${DOCS_REQUIRE_AUTH:true}") boolean requireAuth) throws Exception {
+        http
+                .securityMatcher("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> {
+                    if (requireAuth) {
+                        auth.anyRequest().authenticated();
+                    } else {
+                        // Local sandbox only. Set by docker/docker-compose.yml so the
+                        // docs can be browsed without fighting a login dialog; the
+                        // default everywhere else, including production, is authenticated.
+                        auth.anyRequest().permitAll();
+                    }
+                })
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     SecurityFilterChain filterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint) throws Exception {
         http
                 // No cookies or sessions, so the usual CSRF vector does not apply; the

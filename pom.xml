@@ -10,7 +10,7 @@
     </parent>
     <groupId>xyz.hxwang</groupId>
     <artifactId>joint-account-manager</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
     <name>joint-account-manager</name>
     <description>joint-account-manager</description>
@@ -51,6 +51,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!--
+          Statement exports are not splittable on commas: Amex wraps multi-line
+          detail in quoted fields, so one transaction can span half a dozen
+          physical lines. This reads them the way the format actually works.
+        -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.14.1</version>
         </dependency>
         <!--
           Spring Boot 4 split auto-configuration into per-technology modules.

@@ -46,6 +46,10 @@ services:
       # Login password for the API (user "AdminUser"). Throwaway value for local
       # testing only; the app refuses to start if this is unset.
       AUTH_PASSWORD: localtestpw
+      # Sandbox only: lets the API docs be browsed without a login dialog.
+      # The API itself still requires auth — use Authorize in Swagger, or the
+      # credentials above. Production leaves this unset, so docs stay protected.
+      DOCS_REQUIRE_AUTH: "false"
     ports:
       - "8080:8080"
     healthcheck:

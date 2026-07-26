@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import xyz.hxwang.jointaccountmanager.spend.BillTransactionService;
 
 import java.time.LocalDate;
 
@@ -13,11 +14,14 @@ public class ScheduledTaskService {
     private final RecordRepository recordRepository;
     private final AccountRepository accountRepository;
     private final BalanceService balanceService;
+    private final BillTransactionService billTransactionService;
 
-    public ScheduledTaskService(RecordRepository recordRepository, AccountRepository accountRepository, BalanceService balanceService) {
+    public ScheduledTaskService(RecordRepository recordRepository, AccountRepository accountRepository,
+                                BalanceService balanceService, BillTransactionService billTransactionService) {
         this.recordRepository = recordRepository;
         this.accountRepository = accountRepository;
         this.balanceService = balanceService;
+        this.billTransactionService = billTransactionService;
     }
 
     @Scheduled(cron = "0 0 0 * * ?") // Runs every day at 00:00
@@ -47,6 +51,9 @@ public class ScheduledTaskService {
                 recordRepository.updateIsPaidById(record.getId());
                 String comment = "Auto mark " + record.getAcctName() + " paid successfully, id: " + record.getId();
                 balanceService.updateBalance(record.getAmount().negate(), comment, record.getId());
+                // Rent, electricity and internet have no statement to import, so
+                // this is the only way they reach the spend analysis.
+                billTransactionService.onRecordPaid(record);
                 log.info("marking records as paid with id={}", record.getId());
             }
         }

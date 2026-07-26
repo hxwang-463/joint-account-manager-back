@@ -1,5 +1,11 @@
 HELP.md
 target/
+
+### Database dumps — never commit these. A mysqldump of the server also
+### contains the `mysql` system database, i.e. every account and password hash.
+*.sql
+!src/main/resources/**/*.sql
+!docker/db/*.sql
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
