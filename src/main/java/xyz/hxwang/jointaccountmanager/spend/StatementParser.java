@@ -31,6 +31,18 @@ public interface StatementParser {
     /** True when this file's header row looks like this bank's export. */
     boolean matchesHeader(List<String> headers);
 
+    /**
+     * Every column this parser reads. All must be present, or the file is
+     * rejected before a single row is stored.
+     *
+     * <p>{@link #matchesHeader} only looks at enough columns to tell the banks
+     * apart; it is deliberately loose so a cosmetic change does not stop
+     * recognition. This is the strict list, and it exists because a bank
+     * quietly renaming a column used to produce a partial import that reported
+     * success — rows with no readable value were skipped and never counted.
+     */
+    List<String> requiredColumns();
+
     List<ParsedTxn> parse(Reader reader) throws IOException;
 
     /**
@@ -74,6 +86,22 @@ public interface StatementParser {
             return value == null || value.isBlank() ? null : value.trim();
         }
 
+        /**
+         * Reads a column that must have a value, naming the row when it does
+         * not. Never returns null: a row that reaches a parser has content, so
+         * a missing required field means the format is not what we think it is,
+         * and dropping the row would lose money silently.
+         */
+        static String require(CSVRecord record, String column) {
+            String value = get(record, column);
+            if (value == null) {
+                throw new IllegalStateException(
+                        "row " + record.getRecordNumber() + " has no value in the '" + column
+                                + "' column");
+            }
+            return value;
+        }
+
         static LocalDate parseDate(String value) {
             return value == null ? null : LocalDate.parse(value.trim(), US_DATE);
         }
@@ -110,6 +138,27 @@ public interface StatementParser {
 
         static Map<String, Integer> newOccurrenceCounter() {
             return new HashMap<>();
+        }
+
+        /**
+         * Recognises a card payoff from its description.
+         *
+         * <p>Only Chase and Discover label these explicitly; the rest leave it
+         * to be inferred. Getting it wrong is the most damaging mistake a
+         * parser can make — a single missed autopay counted as spending was
+         * larger than every purchase on that statement combined.
+         */
+        static boolean looksLikePayment(String description) {
+            String lower = description.toLowerCase();
+            return lower.contains("autopay")
+                    || lower.contains("auto-pmt")
+                    || lower.contains("directpay")
+                    || lower.contains("payment - thank")
+                    || lower.contains("payment thank")
+                    || lower.contains("payment received")
+                    || lower.contains("online payment")
+                    || lower.contains("electronic payment")
+                    || (lower.contains("payment") && lower.contains("thank you"));
         }
 
         static String sha256(String input) {

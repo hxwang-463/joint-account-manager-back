@@ -41,17 +41,19 @@ public class ChaseStatementParser implements StatementParser {
     }
 
     @Override
+    public List<String> requiredColumns() {
+        return List.of("Transaction Date","Description","Type","Amount");
+    }
+
+    @Override
     public List<ParsedTxn> parse(Reader reader) throws IOException {
         List<ParsedTxn> results = new ArrayList<>();
         Map<String, Integer> occurrences = Support.newOccurrenceCounter();
 
         try (CSVParser parser = Support.open(reader)) {
             for (CSVRecord record : parser) {
-                String rawAmount = Support.get(record, AMOUNT);
-                String description = Support.get(record, DESCRIPTION);
-                if (rawAmount == null || description == null) {
-                    continue;
-                }
+                String rawAmount = Support.require(record, AMOUNT);
+                String description = Support.require(record, DESCRIPTION);
 
                 BigDecimal signed = Support.parseAmount(rawAmount);
                 // Negative is money leaving the card; positive is a credit back to it.

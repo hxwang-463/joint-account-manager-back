@@ -70,7 +70,7 @@ public class StatementImportService {
         if (account.getStatementFormat() == null || account.getStatementFormat() == StatementFormat.NONE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Account '" + account.getAcctName() + "' is not configured for statement imports. "
-                            + "Set its statementFormat to CHASE or AMEX first.");
+                            + "Set its statementFormat to one of CHASE, AMEX, BOA, CITI or DISCOVER first.");
         }
 
         byte[] bytes = read(file);
@@ -99,9 +99,14 @@ public class StatementImportService {
         try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
             parsed = parser.parse(reader);
         } catch (IOException | RuntimeException e) {
+            // Nothing is stored: parsing completes before the first row is
+            // written, so a file this app cannot fully read is rejected whole
+            // rather than imported in part.
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Could not read this file as a " + account.getStatementFormat()
-                            + " export: " + e.getMessage());
+                    "Could not read this file as a " + account.getStatementFormat() + " export — "
+                            + e.getMessage()
+                            + ". Nothing has been imported. If the file itself looks right, "
+                            + account.getStatementFormat() + " may have changed its export format.");
         }
         if (parsed.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No transactions found in this file");
@@ -224,7 +229,27 @@ public class StatementImportService {
         if (!parser.matchesHeader(headers)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "This file does not look like a " + parser.format() + " export, which is what '"
-                            + account.getAcctName() + "' is configured for. Header was: " + headers);
+                            + account.getAcctName() + "' is configured for. Its columns are: "
+                            + String.join(", ", headers)
+                            + ". Either this belongs to a different account, or "
+                            + parser.format() + " has changed its export format.");
+        }
+
+        // Recognising the bank is not the same as being able to read it. This
+        // is the strict check: a renamed or dropped column is caught here,
+        // before anything is stored, rather than showing up as rows that
+        // quietly failed to parse.
+        List<String> missing = parser.requiredColumns().stream()
+                .filter(column -> !headers.contains(column))
+                .toList();
+        if (!missing.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This " + parser.format() + " export is missing "
+                            + (missing.size() == 1 ? "a column this app needs: " : "columns this app needs: ")
+                            + String.join(", ", missing)
+                            + ". Its columns are: " + String.join(", ", headers)
+                            + ". " + parser.format() + " has probably changed its export format, so "
+                            + "nothing has been imported — the parser needs updating first.");
         }
     }
 

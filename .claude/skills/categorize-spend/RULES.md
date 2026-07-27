@@ -21,6 +21,19 @@ Add a line whenever a decision comes out wrong, and it stays fixed.
   clearly part of a trip.
 - **Petrol stations are `FUEL`.** A convenience purchase at one is still `FUEL`;
   it is not worth separating.
+- **Delivery apps take the category of what was delivered.** DoorDash from a
+  restaurant is `DINING`, but from a supermarket it is `GROCERIES` and from a
+  pharmacy it is `HEALTH`. Same for Instacart and Grubhub. The "delivery apps
+  are `DINING`" rule above is about not filing them as `TRANSPORT`.
+- **Online storefronts split from their shops.** `TARGET.COM` and
+  `WALMART.COM` are `SHOPPING`; the in-store runs stay `GROCERIES`. Name them
+  distinctly ("Target" vs "Target.com") so the split does not read as a bug.
+- **Parking is `TRANSPORT`**, including airport parking — it is getting
+  somewhere, not the trip itself.
+- **Mobile carriers and travel eSIMs are `INTERNET`** (US Mobile, Airalo).
+  There is no separate phone category and it is not worth one.
+- **Haircuts, barbers and spas are `PERSONAL_CARE`.** Gyms stay in `HEALTH`.
+  Cosmetics bought as products (Sephora, Ulta) are `SHOPPING`.
 
 ## Merchant naming
 
@@ -41,6 +54,16 @@ reading a raw descriptor:
 - `TST*` — Toast (restaurant point of sale)
 - `AplPay` — Apple Pay
 - `PY *`, `PAYPAL *` — PayPal
+- `PP*` — PayPal (short form)
+- `LS *` — Lightspeed (Montreal POS; common on Canadian charges)
+- `DD *` — DoorDash; the text after it is the shop delivered from
+- `UEP*`, `INKD*`, `FOOD AT*` — restaurant ordering platforms
+- `FGT*` — Front Gate Tickets (events)
+- `Vagaro_*` — salon and spa booking
+- `QDI*` — Quest Diagnostics
+- `CTLP*` — CSC ServiceWorks (laundry and forecourt machines)
+- `EMPOWER*` — Empower rideshare. **The trailing text is the driver's name,
+  not a merchant** — never use it as the display name. Always just "Empower".
 
 ## Specific merchants
 
@@ -54,6 +77,20 @@ reading a raw descriptor:
 - `PLATINUM RESY CREDIT` / `PLATINUM DIGITAL ENTERTAINMENT CREDIT` → Amex
   statement credits. Categorise them as the spending they offset (DINING,
   ENTERTAINMENT) so they net against it rather than sitting in FEES.
+
+- `SP CSB` → merchant "Crop Shop Boutique", category SHOPPING — an activewear
+  brand selling through Shopify, not a bank or a card service.
+- `ETHERNETSE*` → merchant "Ethernet Servers", category SUBSCRIPTIONS — VPS
+  hosting, despite the bank filing it under Computer Supplies.
+- `DPT OF TRANSPORTATION AND` / `DPT OF TRANSP` / `MDC TRANSIT AUTOMATED FAR`
+  → merchant "Miami-Dade Transit", category TRANSPORT. The first two are $2.25
+  contactless tap fares, the third is EASY Card auto-replenishment. The bank
+  files them variously as Travel and Bills & Utilities; both are wrong.
+- Universal Orlando in-park mobile ordering — `TOADSTOOL CAFE`, `SPIT FYRE`,
+  `BAR MOONSHINE`, `CAF SIRENE`, each with a trailing 4-digit code → DINING,
+  despite the bank filing them as Entertainment.
+- `AMEX CENTURION` lounges and `HUDSON-*` airport shops → TRAVEL, per the
+  airport rule, not DINING.
 
 <!-- Add entries as they come up. -->
 

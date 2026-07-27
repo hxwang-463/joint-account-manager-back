@@ -55,12 +55,29 @@ public class MerchantNormalizer {
     private static final String[] PAYMENT_PREFIXES =
             {"APLPAY ", "SQ *", "TST* ", "PAYPAL *", "PY *", "SP *", "SP "};
 
+    /**
+     * Wallet suffixes some issuers append to every descriptor — "APPLE PAY
+     * ENDING IN 0786". Noise for identifying the merchant, and it carries the
+     * last digits of a card, which has no business ending up in a merchant key
+     * or in a web search.
+     *
+     * <p>Deliberately not anchored on a word boundary: Discover runs the
+     * preceding state code straight into it, so the text arrives as
+     * "NEW YORK NYAPPLE PAY ENDING IN 0786" with nothing separating NY from
+     * APPLE.
+     */
+    private static final String WALLET_SUFFIX =
+            "(?:APPLE|GOOGLE|SAMSUNG)?\\s*PAY\\s*ENDING\\s*IN\\s*\\d*";
+
     public String lookupKey(String descriptor) {
         if (descriptor == null || descriptor.isBlank()) {
             return "";
         }
 
-        String working = descriptor.toUpperCase().replace('*', ' ').trim();
+        String working = descriptor.toUpperCase()
+                .replaceAll(WALLET_SUFFIX, " ")
+                .replace('*', ' ')
+                .trim();
         for (String prefix : PAYMENT_PREFIXES) {
             String upper = prefix.replace('*', ' ').trim() + " ";
             if (working.startsWith(upper)) {
