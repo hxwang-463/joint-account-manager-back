@@ -34,6 +34,10 @@ Add a line whenever a decision comes out wrong, and it stays fixed.
   There is no separate phone category and it is not worth one.
 - **Haircuts, barbers and spas are `PERSONAL_CARE`.** Gyms stay in `HEALTH`.
   Cosmetics bought as products (Sephora, Ulta) are `SHOPPING`.
+- **Bottle shops and off-licences are `GROCERIES`** — wine or spirits to take
+  home is a shop, not a night out. Drinks bought at a bar stay `DINING`.
+- **Intercity and commuter rail is `TRANSPORT`** (Amtrak, LIRR, SEPTA), same
+  as the metro. Only flights, hotels and the trip itself are `TRAVEL`.
 
 ## Merchant naming
 
@@ -91,6 +95,16 @@ reading a raw descriptor:
   despite the bank filing them as Entertainment.
 - `AMEX CENTURION` lounges and `HUDSON-*` airport shops → TRAVEL, per the
   airport rule, not DINING.
+- `BENTONVILLE FW LLC` → merchant "First Watch", category DINING — the
+  breakfast chain; "FW" is the franchisee's LLC, not a merchant name.
+- `HOMEGROWN` → merchant "HomeGrown", category DINING — breakfast and lunch
+  spot in Bentonville, not a grocer despite the name.
+- `KING JAMES WINE SC` → merchant "King James Wine", category GROCERIES — a
+  retail bottle shop. "SC" is "School", not a store code.
+- `CITY OF BENTONVILLE, ARK` → merchant "City of Bentonville", category
+  UTILITIES — municipal water, sewer and refuse.
+- `COX KANSAS COMM` → merchant "Cox Communications", category INTERNET. The
+  long trailing string is an account reference — never search it.
 
 <!-- Add entries as they come up. -->
 

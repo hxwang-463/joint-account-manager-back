@@ -72,6 +72,11 @@ public class BillTransactionService {
                 .txnType(TxnType.PURCHASE)
                 .category(acct.getDefaultCategory())
                 .categorySource(CategorySource.DEFAULT)
+                // Already categorised from account configuration, so it never
+                // enters the classifier's queue. generatesTransactions has
+                // guaranteed a non-blank default category, so there is by
+                // definition nothing left to classify.
+                .processed(true)
                 .dedupKey(dedupKeyFor(record.getId()))
                 .createdAt(LocalDateTime.now())
                 .build());
