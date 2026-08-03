@@ -2,16 +2,16 @@ name: Publish Docker image
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   pull_request:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 env:
   IMAGE_NAME: kaikai463/joint-account-manager
 
-# Two master pushes running at once could otherwise pick the same version and
+# Two main pushes running at once could otherwise pick the same version and
 # race each other's pom commit. Queue them instead of cancelling: a cancelled run
 # might already have pushed an image.
 concurrency:
@@ -22,7 +22,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      # contents: write is needed to push the version bump back to master.
+      # contents: write is needed to push the version bump back to main.
       contents: write
 
     steps:
@@ -50,7 +50,7 @@ jobs:
           fi
 
           # Pull requests and git tags publish exactly what the pom says; only a
-          # master build is allowed to invent a new version.
+          # main build is allowed to invent a new version.
           if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ github.ref_type }}" = "tag" ]; then
             version="$current"; bumped=false
           elif [ -n "$previous" ] && [ "$current" = "$previous" ]; then

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read, bump and rewrite the Maven project's own <version> (never the parent's).
 
-Used by .github/workflows/docker-publish.yml to give every master build a unique
+Used by .github/workflows/docker-publish.yml to give every main build a unique
 image tag. Kept as a file rather than inlined in the workflow so it can be run and
 tested locally:
 
