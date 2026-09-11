@@ -25,9 +25,10 @@ import org.springframework.security.web.SecurityFilterChain;
  * the username is fixed and not secret (it is also baked into the UI), while the
  * password is supplied at runtime via the AUTH_PASSWORD environment variable.
  *
- * <p>CORS is left to {@link WebConfig}: production is same-origin so CORS is never
- * exercised there, and preflight OPTIONS requests are permitted here so a local
- * cross-origin dev server still works.
+ * <p>Which origins may call the API is {@link WebConfig}'s to say; this class only
+ * makes sure the answer survives a rejected request. Production is same-origin so
+ * none of it is exercised there — it exists so a local cross-origin dev server can
+ * log in.
  */
 @Configuration
 @EnableWebSecurity
@@ -73,6 +74,13 @@ public class SecurityConfig {
     @Order(2)
     SecurityFilterChain filterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint) throws Exception {
         http
+                // Applies WebConfig's mappings from inside the security chain, which is
+                // the only place that can put CORS headers on a 401. The entry point
+                // below short-circuits the request before it reaches DispatcherServlet,
+                // so MVC-level CORS never runs for a rejected request — and a browser
+                // that cannot read the 401 reports an opaque CORS failure instead,
+                // leaving the SPA unable to tell "wrong password" from "server down".
+                .cors(Customizer.withDefaults())
                 // No cookies or sessions, so the usual CSRF vector does not apply; the
                 // credential travels in the Authorization header on every request.
                 .csrf(AbstractHttpConfigurer::disable)

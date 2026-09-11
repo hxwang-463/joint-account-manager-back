@@ -102,6 +102,16 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            @WebMvcTest and MockMvc. Boot 4 split the web test slice out of
+            spring-boot-test-autoconfigure, which now ships only the json and
+            jdbc slices, so the starter above no longer brings it in.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
