@@ -38,6 +38,10 @@ Add a line whenever a decision comes out wrong, and it stays fixed.
   home is a shop, not a night out. Drinks bought at a bar stay `DINING`.
 - **Intercity and commuter rail is `TRANSPORT`** (Amtrak, LIRR, SEPTA), same
   as the metro. Only flights, hotels and the trip itself are `TRAVEL`.
+- **Food and drink inside a venue you paid to enter is `DINING`** — theme park,
+  music festival, stadium. The ticket or admission is `ENTERTAINMENT`, the
+  burger inside is not. So `FGT*LOLLA TIX` is `ENTERTAINMENT` while
+  `LOLLAPALOOZA*CASHLESS` is `DINING`. Banks file both as Entertainment.
 
 ## Merchant naming
 
@@ -105,6 +109,13 @@ reading a raw descriptor:
   UTILITIES — municipal water, sewer and refuse.
 - `COX KANSAS COMM` → merchant "Cox Communications", category INTERNET. The
   long trailing string is an account reference — never search it.
+- `WB STUDIO ENT` → merchant "Warner Bros. Store", category SHOPPING — WB
+  Studio Enterprises, the retail arm. The bank files it as Office Supplies.
+- `VENTRA` → merchant "Ventra", category TRANSPORT — Chicago CTA fares, the
+  same case as STM and Miami-Dade. The bank calls it Travel.
+- `IL LOT<number>` → an Illinois event parking lot; the name after the lot
+  number is the operator (e.g. `UCP SEGUIN`). Category TRANSPORT, per the
+  parking rule, whatever the bank says.
 
 <!-- Add entries as they come up. -->
 
